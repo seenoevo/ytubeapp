@@ -8,10 +8,6 @@
 
 import UIKit
 
-/*
- * Performs synchronous request
- * Must wait for this task to finish before starting another task.
- */
 extension NSURLSession
 {
     func sendSynchronousRequest(request: NSURLRequest, completionHandler: (NSData?, NSURLResponse?, NSError?) -> Void)
@@ -33,23 +29,15 @@ class PlaylistVideosViewController: UIViewController, UITableViewDelegate, UITab
     @IBOutlet var playlistVideosTableView: UITableView!
     @IBOutlet var progressView: UIView!
     
-    
     let serialQueue = dispatch_queue_create(nil, DISPATCH_QUEUE_SERIAL)
     
-    // Key to use YouTube API
     let apiKey = "AIzaSyB537VDENQPVMR5cYtozhLLEbEUI59Sx28"
     
-    // Maximum results returned from YouTube search
     let maxResults: Int = 50
     
     // Channel to get data from
     let channelID = "UC5ltMmeC4YFaart1SSXdmAg"
-    
-    // AppSpy
-    //let channelID = "UCJKOvdk-nVzDAFR_9MF64sw"
-    
-    var playlistID: String!
-    
+
     // Storage of JSON data
     var results_DICT: Dictionary<NSObject, AnyObject> = Dictionary<NSObject, AnyObject>()
     var resultsVideoDurations_DICT: Dictionary<NSObject, AnyObject> = Dictionary<NSObject, AnyObject>()
@@ -70,20 +58,10 @@ class PlaylistVideosViewController: UIViewController, UITableViewDelegate, UITab
     var startOfNextIndexForVideos: Int = 0
     var runGetAllVideoDurationsInGetAllVideosFromPlaylist: Bool = true
 
-   /*
-    * MARK: UIVIEWCONTROLLER FUNCTIONS
-    *
-    * This function is called when the view appears for the first time, and
-    * called one time when the app starts up.
-    */
     override func viewDidLoad()
     {
         super.viewDidLoad()
         
-        // Removes extra separator lines for empty cells
-        playlistVideosTableView.tableFooterView = UIView(frame: CGRectZero)
-        
-        // Allows the appropriates functions to be used in the Table View
         playlistVideosTableView.dataSource = self
         playlistVideosTableView.delegate = self
         
@@ -91,47 +69,29 @@ class PlaylistVideosViewController: UIViewController, UITableViewDelegate, UITab
         getAllVideosFromPlaylist("https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=\(maxResults)&playlistId=PLxnnlv22Xcq1--zBP7iDc2WIavgmRT11B&key=\(apiKey)")
     }
 
-   /*
-    * MARK: UITABLEVIEWDELEGATE
-    *
-    * This function sets the number of sections.
-    */
     func numberOfSectionsInTableView(tableView: UITableView) -> Int
     {
         return 1
     }
 
-   /*
-    * This function sets the number of rows per section.
-    */
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int
     {
         return playlistVideos_ARRAY.count
     }
  
-   /*
-    * This function populates each cell with data
-    */
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell
     {
         var cell: UITableViewCell!
         
-        // Dequeue the cell to load data
         cell = tableView.dequeueReusableCellWithIdentifier("PlaylistVideos", forIndexPath: indexPath)
         
-        // Reference the video and video title imageview via its tags
         let videoThumbnail = cell.viewWithTag(7) as! UIImageView
         let videoTitle = cell.viewWithTag(8) as! UILabel
         let videoDuration = cell.viewWithTag(9) as! UILabel
-        
-       /*
-        * User scrolled to last element (i.e. 5th video), so load more results.
-        * Check to ensure there is another token, i.e. another page of items
-        */
+
         if indexPath.row == playlistVideos_ARRAY.count - 1
                     && self.results_DICT["nextPageToken"] != nil
         {
-            // Retrieve the next token
             let nextPageToken = results_DICT["nextPageToken"] as! String
             
             self.progressView.hidden = false
@@ -140,67 +100,26 @@ class PlaylistVideosViewController: UIViewController, UITableViewDelegate, UITab
             getAllVideosFromPlaylist("https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&pageToken=\(nextPageToken)&maxResults=\(maxResults)&playlistId=PLxnnlv22Xcq1--zBP7iDc2WIavgmRT11B&key=\(apiKey)")
         }
         
-        // Load the relevant videos per playlist data
         videoTitle.text = titleOfVideo_ARRAY[indexPath.row]
         videoDuration.text = formattedDurationOfVideos_ARRAY[indexPath.row]
         videoThumbnail.image = thumbnailOfVideo[indexPath.row]
-        
-        // Return the cell with loaded data
+
         return cell
     }
 
-   /*
-    * This function sets the height of each cell.
-    */
     func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat
     {
         return 80.0
     }
-    
-   /*
-    * MARK: UITABLEVIEWDATASOURCE
-    *
-    * This function monitors the selection of a row.
-    */
+
     func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath)
     {
-        // Deselects the row
+
         playlistVideosTableView.deselectRowAtIndexPath(indexPath, animated: true)
     }
-    
-    func methodOne(urlString1: String)
-    {
-        let targetURL = NSURL(string: urlString1)
-        
-        let task = NSURLSession.sharedSession().dataTaskWithURL(targetURL!) {(data, response, error) in
-            
-            // DO STUFF
-            self.methodTwo("some url string")
-            
-        }
-    
-        task.resume()
-    }
-    
-    func methodTwo(urlString2: String)
-    {
-        let targetURL = NSURL(string: urlString2)
-        
-        let task = NSURLSession.sharedSession().dataTaskWithURL(targetURL!) {(data, response, error) in
-            
-            // DO STUFF
-            
-        }
-        
-        task.resume()
-    }
-    
-   /*
-    * This function will retrieve all the important information from each video's playlist to display in the table.
-    */
+
     func getAllVideosFromPlaylist(urlString: String)
     {
-        // URL of the JSON data
         let targetURL = NSURL(string: urlString)
         
        
@@ -313,11 +232,7 @@ class PlaylistVideosViewController: UIViewController, UITableViewDelegate, UITab
         
         task.resume()
     }
-   
-    /*
-    * This function performs this task synchronously.
-    * Other tasks must wait for this to finish before starting.
-    */
+
     func getAllVideoDurations(urlString: String)
     {
         // URL of the JSON data
@@ -334,14 +249,12 @@ class PlaylistVideosViewController: UIViewController, UITableViewDelegate, UITab
                     // Convert the JSON data to a dictionary
                     self.resultsVideoDurations_DICT = try NSJSONSerialization.JSONObjectWithData(validData, options: NSJSONReadingOptions()) as! Dictionary<NSObject, AnyObject>
                     
-                    
                     // Get the first dictionary item from the returned items (usually there's just one item)
                     let item = self.resultsVideoDurations_DICT["items"] as! [AnyObject]!
                     
                     
                     // Video duration in unfamiliar format
                     let videoDuration = ( ( item[0] as! Dictionary<NSObject, AnyObject>)["contentDetails"] as! Dictionary<NSObject, AnyObject> )["duration"] as? String
-                    
                     
                     self.formattedDurationOfVideos_ARRAY.append( self.formatDurations(videoDuration!) )
                     
@@ -376,9 +289,6 @@ class PlaylistVideosViewController: UIViewController, UITableViewDelegate, UITab
         task.resume()
     }
 
-   /*
-    * This function will take YouTube's ISO 8601 format and convert it to a recognizable time format.
-    */
     func formatDurations(sender : String) ->String
     {
         var timeDuration : NSString!
